@@ -1,0 +1,26 @@
+{
+  "name": "my-clerk-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^6.12.8", // Clerk SDK для Next.js
+    "next": "15.2.3", // Next.js
+    "react": "^19.0.0", // React
+    "react-dom": "^19.0.0" // React DOM
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.9", // PostCSS для Tailwind
+    "@types/node": "^22", // Типы для Node.js
+    "@types/react": "^19", // Типы для React
+    "@types/react-dom": "^19", // Типы для React DOM
+    "postcss": "^8", // PostCSS
+    "tailwindcss": "^4.0.9", // Tailwind CSS
+    "typescript": "^5" // TypeScript
+  }
+}
