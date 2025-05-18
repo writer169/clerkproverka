@@ -1,4 +1,4 @@
-// app/layout.js
+// app/layout.tsx
 import { ClerkProvider } from '@clerk/nextjs';
 import './globals.css';
 
@@ -7,7 +7,7 @@ export const metadata = {
   description: 'Next.js app with Clerk authentication',
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider>
       <html lang="en">
