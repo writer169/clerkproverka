@@ -1,4 +1,4 @@
-// app/dashboard/page.js
+// app/dashboard/page.tsx
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { SignOutButton } from '@clerk/nextjs';
