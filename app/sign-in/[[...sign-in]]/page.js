@@ -1,14 +1,14 @@
 // app/sign-in/[[...sign-in]]/page.js
 import { SignIn } from '@clerk/nextjs';
-import { currentUser } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
-export default async function SignInPage() {
-  // Проверяем, авторизован ли пользователь
-  const user = await currentUser();
+export default function SignInPage() {
+  // Используем auth() вместо currentUser()
+  const { userId } = auth();
   
   // Если пользователь уже авторизован, перенаправляем на страницу dashboard
-  if (user) {
+  if (userId) {
     redirect('/dashboard');
   }
 
