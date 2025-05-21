@@ -1,17 +1,21 @@
-// app/sign-in/[[...sign-in]]/page.js
+'use client';
+
 import { SignIn } from '@clerk/nextjs';
-import { auth } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
+import { useAuth } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function SignInPage() {
-  // Используем auth() вместо currentUser()
-  const { userId } = auth();
-  
-  // Если пользователь уже авторизован, перенаправляем на страницу dashboard
-  if (userId) {
-    redirect('/dashboard');
-  }
+  const { isLoaded, userId } = useAuth();
+  const router = useRouter();
 
+  useEffect(() => {
+    if (isLoaded && userId) {
+      router.push('/dashboard');
+    }
+  }, [isLoaded, userId, router]);
+
+  // Не перенаправляем автоматически, просто рендерим компонент входа
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-50">
       <SignIn 
@@ -19,7 +23,6 @@ export default function SignInPage() {
         routing="path"
         signUpUrl="/sign-up"
         afterSignInUrl="/dashboard"
-        redirectUrl="/dashboard"
       />
     </div>
   );
