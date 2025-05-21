@@ -1,12 +1,10 @@
-// middleware.ts
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+// middleware.js
+import { authMiddleware } from '@clerk/nextjs/server';
 
-const isProtectedRoute = createRouteMatcher(['/dashboard(.*)']);
-
-export default clerkMiddleware((auth, req) => {
-  if (isProtectedRoute(req)) {
-    auth().protect(); // Защищаем маршруты, соответствующие /dashboard
-  }
+export default authMiddleware({
+  publicRoutes: ["/", "/sign-in(.*)", "/sign-up(.*)"],
+  // или используйте ignoredRoutes для путей, которые не нуждаются в проверке аутентификации
+  // ignoredRoutes: ["/((?!api|trpc))(_next|.+\..+)(.*)"],
 });
 
 export const config = {
