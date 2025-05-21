@@ -19,9 +19,8 @@ export default function Dashboard() {
         // Redirect to sign-in if not authenticated
         router.push('/sign-in');
       } else if (userId !== ADMIN_USER_ID) {
-        // Redirect to home page if not the admin user
-        router.push('/');
-        // You could also redirect to an "unauthorized" page instead
+        // Redirect to unauthorized page if not the admin user
+        router.push('/unauthorized');
       } else {
         // User is authenticated and is the admin
         setIsAuthorized(true);
