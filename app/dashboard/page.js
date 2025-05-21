@@ -1,15 +1,23 @@
-// app/dashboard/page.js
-import { auth } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useAuth } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
+import { useEffect } from 'react';
 
 export default function Dashboard() {
-  // Используем auth() вместо currentUser()
-  const { userId } = auth();
+  const { isLoaded, userId } = useAuth();
+  const router = useRouter();
 
-  // Если пользователь не авторизован, перенаправляем на страницу входа
-  if (!userId) {
-    redirect('/sign-in');
+  useEffect(() => {
+    if (isLoaded && !userId) {
+      router.push('/sign-in');
+    }
+  }, [isLoaded, userId, router]);
+
+  // Показываем заглушку, пока проверяем авторизацию
+  if (!isLoaded || !userId) {
+    return <div>Загрузка...</div>;
   }
 
   return (
