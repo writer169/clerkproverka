@@ -1,10 +1,10 @@
 // middleware.js
-import { authMiddleware } from '@clerk/nextjs/server';
+import { clerkMiddleware } from '@clerk/nextjs/server';
 
-export default authMiddleware({
+// Защищаем все маршруты, кроме указанных в publicRoutes
+export default clerkMiddleware({
+  // Публичные маршруты, доступные без авторизации
   publicRoutes: ["/", "/sign-in(.*)", "/sign-up(.*)"],
-  // или используйте ignoredRoutes для путей, которые не нуждаются в проверке аутентификации
-  // ignoredRoutes: ["/((?!api|trpc))(_next|.+\..+)(.*)"],
 });
 
 export const config = {
