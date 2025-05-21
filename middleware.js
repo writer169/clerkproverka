@@ -1,17 +1,14 @@
 // middleware.js
-import { clerkMiddleware } from '@clerk/nextjs/server';
+import { clerkMiddleware } from '@clerk/nextjs/server'
 
-// Защищаем все маршруты, кроме указанных в publicRoutes
-export default clerkMiddleware({
-  // Публичные маршруты, доступные без авторизации
-  publicRoutes: ["/", "/sign-in(.*)", "/sign-up(.*)"],
-});
+// Используем middleware без дополнительной конфигурации
+export default clerkMiddleware()
 
 export const config = {
   matcher: [
-    // Применять middleware ко всем маршрутам, кроме статических файлов и _next
-    '/((?!.*\\..*|_next).*)',
-    '/',
+    // Skip Next.js internals and all static files, unless found in search params
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Always run for API routes
     '/(api|trpc)(.*)',
   ],
-};
+}
