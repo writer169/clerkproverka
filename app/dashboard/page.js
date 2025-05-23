@@ -7,34 +7,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { RefreshCw, AlertCircle, CheckCircle, Inbox } from 'lucide-react';
 import RequestCard from '../../components/RequestCard';
 
-// Изменить useEffect для проверки авторизации:
-useEffect(() => {
-  const checkAdminAccess = async () => {
-    if (isLoaded) {
-      if (!userId) {
-        router.push('/sign-in');
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/auth/check-admin');
-        const data = await response.json();
-
-        if (!data.isAdmin) {
-          router.push('/unauthorized');
-        } else {
-          setIsAuthorized(true);
-        }
-      } catch (error) {
-        console.error('Ошибка проверки прав:', error);
-        router.push('/unauthorized');
-      }
-    }
-  };
-
-  checkAdminAccess();
-}, [isLoaded, userId, router]);
-
 export default function Dashboard() {
   const { isLoaded, userId } = useAuth();
   const router = useRouter();
@@ -43,6 +15,34 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
+
+  // useEffect для проверки авторизации должен быть ВНУТРИ компонента
+  useEffect(() => {
+    const checkAdminAccess = async () => {
+      if (isLoaded) {
+        if (!userId) {
+          router.push('/sign-in');
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/auth/check-admin');
+          const data = await response.json();
+
+          if (!data.isAdmin) {
+            router.push('/unauthorized');
+          } else {
+            setIsAuthorized(true);
+          }
+        } catch (error) {
+          console.error('Ошибка проверки прав:', error);
+          router.push('/unauthorized');
+        }
+      }
+    };
+
+    checkAdminAccess();
+  }, [isLoaded, userId, router]);
 
   const fetchRequests = useCallback(async () => {
     try {
