@@ -29,7 +29,7 @@ export async function POST(request) {
 
     // Подключаемся к MongoDB
     const client = await clientPromise;
-    const db = client.db('your_database_name');
+    const db = client.db('authapp');
     const collection = db.collection('auth_approvals');
 
     // Проверяем существование запроса
