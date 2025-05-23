@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { ObjectId } from 'mongodb';
 import clientPromise from '../../../../lib/mongodb';
-// Заменить импорт:
 import { ADMIN_USER_ID } from '../../../../lib/config';
 
-export async function POST(request) {
+export async function GET() {
   try {
     // Проверяем аутентификацию
     const { userId } = await auth();
@@ -19,62 +17,24 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 });
     }
 
-    // Получаем данные из запроса
-    const body = await request.json();
-    const { id } = body;
-
-    if (!id) {
-      return NextResponse.json({ error: 'Отсутствует ID запроса' }, { status: 400 });
-    }
-
     // Подключаемся к MongoDB
     const client = await clientPromise;
     const db = client.db('authapp');
     const collection = db.collection('auth_approvals');
 
-    // Проверяем существование запроса
-    const existingRequest = await collection.findOne({
-      _id: new ObjectId(id),
-      status: 'pending'
-    });
-
-    if (!existingRequest) {
-      return NextResponse.json({
-        error: 'Запрос не найден или уже обработан'
-      }, { status: 404 });
-    }
-
-    // Обновляем статус запроса
-    const result = await collection.updateOne(
-      { _id: new ObjectId(id) },
-      {
-        $set: {
-          status: 'approved',
-          approvedAt: new Date()
-        }
-      }
-    );
-
-    if (result.modifiedCount === 0) {
-      return NextResponse.json({
-        error: 'Не удалось обновить запрос'
-      }, { status: 500 });
-    }
+    // Получаем одобренные запросы, отсортированные по дате одобрения (новые сначала)
+    const requests = await collection
+      .find({ status: 'approved' })
+      .sort({ approvedAt: -1 })
+      .toArray();
 
     return NextResponse.json({
-      success: true,
-      message: 'Запрос успешно одобрен'
+      requests,
+      count: requests.length
     });
 
   } catch (error) {
-    console.error('Ошибка одобрения запроса:', error);
-
-    if (error.name === 'BSONError') {
-      return NextResponse.json({
-        error: 'Неверный формат ID'
-      }, { status: 400 });
-    }
-
+    console.error('Ошибка получения одобренных запросов:', error);
     return NextResponse.json(
       { error: 'Внутренняя ошибка сервера' },
       { status: 500 }
