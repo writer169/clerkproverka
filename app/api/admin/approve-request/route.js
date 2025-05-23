@@ -2,14 +2,14 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { ObjectId } from 'mongodb';
 import clientPromise from '../../../../lib/mongodb';
-
-const ADMIN_USER_ID = process.env.NEXT_PUBLIC_ADMIN_USER_ID;
+// Заменить импорт:
+import { ADMIN_USER_ID } from '../../../../lib/config';
 
 export async function POST(request) {
   try {
     // Проверяем аутентификацию
     const { userId } = await auth();
-    
+
     if (!userId) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
     }
@@ -33,22 +33,22 @@ export async function POST(request) {
     const collection = db.collection('auth_approvals');
 
     // Проверяем существование запроса
-    const existingRequest = await collection.findOne({ 
+    const existingRequest = await collection.findOne({
       _id: new ObjectId(id),
-      status: 'pending' 
+      status: 'pending'
     });
 
     if (!existingRequest) {
-      return NextResponse.json({ 
-        error: 'Запрос не найден или уже обработан' 
+      return NextResponse.json({
+        error: 'Запрос не найден или уже обработан'
       }, { status: 404 });
     }
 
     // Обновляем статус запроса
     const result = await collection.updateOne(
       { _id: new ObjectId(id) },
-      { 
-        $set: { 
+      {
+        $set: {
           status: 'approved',
           approvedAt: new Date()
         }
@@ -56,22 +56,22 @@ export async function POST(request) {
     );
 
     if (result.modifiedCount === 0) {
-      return NextResponse.json({ 
-        error: 'Не удалось обновить запрос' 
+      return NextResponse.json({
+        error: 'Не удалось обновить запрос'
       }, { status: 500 });
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
       message: 'Запрос успешно одобрен'
     });
 
   } catch (error) {
     console.error('Ошибка одобрения запроса:', error);
-    
+
     if (error.name === 'BSONError') {
-      return NextResponse.json({ 
-        error: 'Неверный формат ID' 
+      return NextResponse.json({
+        error: 'Неверный формат ID'
       }, { status: 400 });
     }
 
