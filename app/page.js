@@ -6,14 +6,13 @@ import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-// Добавить состояние:
-const [adminCheck, setAdminCheck] = useState({ loading: true, isAdmin: false });
-
 export default function Home() {
   const { isLoaded, userId } = useAuth();
   const router = useRouter();
+  
+  // Состояние должно быть объявлено ВНУТРИ компонента
+  const [adminCheck, setAdminCheck] = useState({ loading: true, isAdmin: false });
 
-  // Заменить useEffect:
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (isLoaded && userId) {
