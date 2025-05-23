@@ -1,9 +1,13 @@
 // middleware.js
 import { clerkMiddleware } from '@clerk/nextjs/server';
 
-// Самая простая конфигурация middleware без дополнительных настроек
 export default clerkMiddleware();
 
 export const config = {
-  matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)'],
+  matcher: [
+    // Пропускаем внутренние файлы Next.js и статические файлы
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Всегда запускаем для API routes
+    '/(api|trpc)(.*)',
+  ],
 };
