@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import clientPromise from '../../../../lib/mongodb';
 import { getAppName } from '../../../../utils/appNames';
-
-const ADMIN_USER_ID = process.env.NEXT_PUBLIC_ADMIN_USER_ID;
+// Заменить импорт:
+import { ADMIN_USER_ID } from '../../../../lib/config';
 
 export async function GET() {
   try {
