@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth, getUser } from '@clerk/nextjs/server'; // Замените clerkClient на getUser
+import { auth, currentUser } from '@clerk/nextjs/server';
 import clientPromise from '../../../../lib/mongodb';
 import { getAppName } from '../../../../utils/appNames';
 
@@ -7,35 +7,30 @@ const ADMIN_USER_ID = process.env.NEXT_PUBLIC_ADMIN_USER_ID;
 
 export async function GET() {
   try {
-    // Проверяем аутентификацию
     const { userId } = await auth();
-
     if (!userId) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
     }
-
-    // Проверяем права администратора
     if (userId !== ADMIN_USER_ID) {
       return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 });
     }
 
-    // Подключаемся к MongoDB
     const client = await clientPromise;
     const db = client.db();
     const collection = db.collection('auth_approvals');
 
-    // Получаем ожидающие запросы
     const pendingRequests = await collection
       .find({ status: 'pending' })
       .sort({ requestedAt: -1 })
       .toArray();
 
-    // Получаем информацию о пользователях из Clerk
     const requestsWithUserInfo = await Promise.all(
       pendingRequests.map(async (request) => {
         try {
-          const user = await getUser(request.userId); // Используем getUser
-
+          const user = await currentUser();
+          if (user?.id !== request.userId) {
+            throw new Error('User not found or mismatch');
+          }
           return {
             _id: request._id.toString(),
             userId: request.userId,
@@ -67,7 +62,6 @@ export async function GET() {
     );
 
     return NextResponse.json({ requests: requestsWithUserInfo });
-
   } catch (error) {
     console.error('Ошибка получения ожидающих запросов:', error);
     return NextResponse.json(
