@@ -16,7 +16,7 @@ export async function GET() {
     }
 
     const client = await clientPromise;
-    const db = client.db('your_database_name');
+    const db = client.db('authapp');
     const collection = db.collection('auth_approvals');
 
     const pendingRequests = await collection
