@@ -4,14 +4,18 @@ import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
 import { useEffect, useState, useCallback } from 'react';
-import { RefreshCw, AlertCircle, CheckCircle, Inbox } from 'lucide-react';
+import { RefreshCw, AlertCircle, CheckCircle, Inbox, XCircle, Clock } from 'lucide-react';
 import RequestCard from '../../components/RequestCard';
+import ApprovedRequestCard from '../../components/ApprovedRequestCard';
 
 export default function Dashboard() {
   const { isLoaded, userId } = useAuth();
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [activeTab, setActiveTab] = useState('pending');
   const [requests, setRequests] = useState([]);
+  const [approvedRequests, setApprovedRequests] = useState([]);
+  const [rejectedRequests, setRejectedRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
@@ -44,7 +48,7 @@ export default function Dashboard() {
     checkAdminAccess();
   }, [isLoaded, userId, router]);
 
-  const fetchRequests = useCallback(async () => {
+  const fetchPendingRequests = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -58,12 +62,67 @@ export default function Dashboard() {
 
       setRequests(data.requests || []);
     } catch (err) {
-      console.error('Ошибка загрузки запросов:', err);
+      console.error('Ошибка загрузки ожидающих запросов:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const fetchApprovedRequests = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch('/api/admin/approved-requests');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Ошибка загрузки данных');
+      }
+
+      setApprovedRequests(data.requests || []);
+    } catch (err) {
+      console.error('Ошибка загрузки одобренных запросов:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchRejectedRequests = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch('/api/admin/rejected-requests');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Ошибка загрузки данных');
+      }
+
+      setRejectedRequests(data.requests || []);
+    } catch (err) {
+      console.error('Ошибка загрузки отклоненных запросов:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchCurrentTabData = useCallback(() => {
+    switch (activeTab) {
+      case 'pending':
+        return fetchPendingRequests();
+      case 'approved':
+        return fetchApprovedRequests();
+      case 'rejected':
+        return fetchRejectedRequests();
+      default:
+        return fetchPendingRequests();
+    }
+  }, [activeTab, fetchPendingRequests, fetchApprovedRequests, fetchRejectedRequests]);
 
   const handleApprove = async (requestId) => {
     try {
@@ -85,20 +144,121 @@ export default function Dashboard() {
       setSuccessMessage('Запрос успешно одобрен!');
       setTimeout(() => setSuccessMessage(''), 3000);
 
-      // Обновляем список запросов
-      await fetchRequests();
+      // Обновляем список текущей вкладки
+      await fetchCurrentTabData();
     } catch (err) {
       console.error('Ошибка одобрения запроса:', err);
       setError(err.message);
     }
   };
 
-  // Загружаем запросы при авторизации
+  const handleReject = async (requestId, reason) => {
+    try {
+      const response = await fetch('/api/admin/reject-request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: requestId, reason }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Ошибка отклонения запроса');
+      }
+
+      // Показываем сообщение об успехе
+      setSuccessMessage('Запрос успешно отклонен!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+
+      // Обновляем список текущей вкладки
+      await fetchCurrentTabData();
+    } catch (err) {
+      console.error('Ошибка отклонения запроса:', err);
+      setError(err.message);
+    }
+  };
+
+  // Загружаем данные при смене вкладки
   useEffect(() => {
     if (isAuthorized) {
-      fetchRequests();
+      fetchCurrentTabData();
     }
-  }, [isAuthorized, fetchRequests]);
+  }, [isAuthorized, activeTab, fetchCurrentTabData]);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setError(null);
+  };
+
+  const getCurrentRequests = () => {
+    switch (activeTab) {
+      case 'pending':
+        return requests;
+      case 'approved':
+        return approvedRequests;
+      case 'rejected':
+        return rejectedRequests;
+      default:
+        return [];
+    }
+  };
+
+  const getTabTitle = () => {
+    switch (activeTab) {
+      case 'pending':
+        return 'Ожидающие одобрения';
+      case 'approved':
+        return 'Одобренные запросы';
+      case 'rejected':
+        return 'Отклоненные запросы';
+      default:
+        return 'Запросы';
+    }
+  };
+
+  const getTabDescription = () => {
+    switch (activeTab) {
+      case 'pending':
+        return 'Запросы пользователей на доступ к приложениям';
+      case 'approved':
+        return 'Ранее одобренные запросы на доступ';
+      case 'rejected':
+        return 'Отклоненные запросы с указанием причин';
+      default:
+        return '';
+    }
+  };
+
+  const getEmptyStateContent = () => {
+    switch (activeTab) {
+      case 'pending':
+        return {
+          icon: <Inbox className="w-12 h-12 text-gray-300 mx-auto mb-4" />,
+          title: 'Нет ожидающих запросов',
+          description: 'Все запросы на доступ обработаны'
+        };
+      case 'approved':
+        return {
+          icon: <CheckCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />,
+          title: 'Нет одобренных запросов',
+          description: 'Одобренные запросы будут отображаться здесь'
+        };
+      case 'rejected':
+        return {
+          icon: <XCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />,
+          title: 'Нет отклоненных запросов',
+          description: 'Отклоненные запросы будут отображаться здесь'
+        };
+      default:
+        return {
+          icon: <Inbox className="w-12 h-12 text-gray-300 mx-auto mb-4" />,
+          title: 'Нет данных',
+          description: ''
+        };
+    }
+  };
 
   // Показываем загрузку пока проверяем авторизацию
   if (!isLoaded || !isAuthorized) {
@@ -112,117 +272,9 @@ export default function Dashboard() {
     );
   }
 
+  const currentRequests = getCurrentRequests();
+  const emptyState = getEmptyStateContent();
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Шапка */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-                Панель администратора
-              </h1>
-              <p className="text-sm text-gray-600 hidden sm:block">
-                Управление запросами на доступ к приложениям
-              </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={fetchRequests}
-                disabled={loading}
-                className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">Обновить</span>
-              </button>
-              <UserButton afterSignOutUrl="/" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Основной контент */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Уведомления */}
-        {successMessage && (
-          <div className="mb-6 flex items-center space-x-2 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <CheckCircle className="w-5 h-5 text-green-500" />
-            <p className="text-green-800 text-sm font-medium">{successMessage}</p>
-          </div>
-        )}
-
-        {error && (
-          <div className="mb-6 flex items-center space-x-2 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <AlertCircle className="w-5 h-5 text-red-500" />
-            <p className="text-red-800 text-sm font-medium">{error}</p>
-          </div>
-        )}
-
-        {/* Статистика */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-            <div className="flex items-center">
-              <div className="p-2 bg-orange-100 rounded-md">
-                <Inbox className="w-5 h-5 text-orange-600" />
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-600">Ожидающие запросы</p>
-                <p className="text-2xl font-bold text-gray-900">{requests.length}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-md">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-600">Статус системы</p>
-                <p className="text-sm font-bold text-green-600">Активна</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Список запросов */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Ожидающие одобрения
-            </h2>
-            <p className="text-sm text-gray-600">
-              Запросы пользователей на доступ к приложениям
-            </p>
-          </div>
-
-          <div className="p-4">
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-gray-600">Загрузка запросов...</p>
-              </div>
-            ) : requests.length === 0 ? (
-              <div className="text-center py-8">
-                <Inbox className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-600 font-medium">Нет ожидающих запросов</p>
-                <p className="text-gray-500 text-sm">
-                  Все запросы на доступ обработаны
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-0">
-                {requests.map((request) => (
-                  <RequestCard
-                    key={request._id}
-                    request={request}
-                    onApprove={handleApprove}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+      {
