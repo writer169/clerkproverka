@@ -1,8 +1,24 @@
-// app/page.js
+'use client';
+
 import Link from 'next/link';
 import { Shield, Users, Settings, ArrowRight } from 'lucide-react';
+import { useAuth } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+
+const ADMIN_USER_ID = process.env.NEXT_PUBLIC_ADMIN_USER_ID || 'your_admin_user_id_here';
 
 export default function Home() {
+  const { isLoaded, userId } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Если пользователь авторизован и является админом, перенаправляем в панель
+    if (isLoaded && userId === ADMIN_USER_ID) {
+      router.push('/dashboard');
+    }
+  }, [isLoaded, userId, router]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className="container mx-auto px-4 py-8 sm:py-16">
