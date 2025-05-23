@@ -1,9 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { Shield, ArrowLeft, AlertTriangle } from 'lucide-react';
+import { Shield, ArrowLeft, AlertTriangle, LogOut } from 'lucide-react';
+import { useClerk } from '@clerk/nextjs';
 
 export default function Unauthorized() {
+  const { signOut } = useClerk();
+
+  const handleSignOut = async () => {
+    await signOut();
+    // После выхода пользователь будет перенаправлен на главную страницу
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
@@ -56,12 +64,13 @@ export default function Unauthorized() {
                 Вернуться на главную
               </Link>
               
-              <Link 
-                href="/sign-in" 
+              <button 
+                onClick={handleSignOut}
                 className="w-full inline-flex items-center justify-center px-4 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200"
               >
-                Войти другой учётной записью
-              </Link>
+                <LogOut className="w-4 h-4 mr-2" />
+                Выйти и войти другой учётной записью
+              </button>
             </div>
           </div>
 
