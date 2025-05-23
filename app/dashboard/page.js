@@ -7,7 +7,33 @@ import { useEffect, useState, useCallback } from 'react';
 import { RefreshCw, AlertCircle, CheckCircle, Inbox } from 'lucide-react';
 import RequestCard from '../../components/RequestCard';
 
-const ADMIN_USER_ID = process.env.NEXT_PUBLIC_ADMIN_USER_ID || 'your_admin_user_id_here';
+// Изменить useEffect для проверки авторизации:
+useEffect(() => {
+  const checkAdminAccess = async () => {
+    if (isLoaded) {
+      if (!userId) {
+        router.push('/sign-in');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/check-admin');
+        const data = await response.json();
+
+        if (!data.isAdmin) {
+          router.push('/unauthorized');
+        } else {
+          setIsAuthorized(true);
+        }
+      } catch (error) {
+        console.error('Ошибка проверки прав:', error);
+        router.push('/unauthorized');
+      }
+    }
+  };
+
+  checkAdminAccess();
+}, [isLoaded, userId, router]);
 
 export default function Dashboard() {
   const { isLoaded, userId } = useAuth();
@@ -18,23 +44,11 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
 
-  useEffect(() => {
-    if (isLoaded) {
-      if (!userId) {
-        router.push('/sign-in');
-      } else if (userId !== ADMIN_USER_ID) {
-        router.push('/unauthorized');
-      } else {
-        setIsAuthorized(true);
-      }
-    }
-  }, [isLoaded, userId, router]);
-
   const fetchRequests = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await fetch('/api/admin/pending-requests');
       const data = await response.json();
 
@@ -180,7 +194,7 @@ export default function Dashboard() {
               Запросы пользователей на доступ к приложениям
             </p>
           </div>
-          
+
           <div className="p-4">
             {loading ? (
               <div className="text-center py-8">
