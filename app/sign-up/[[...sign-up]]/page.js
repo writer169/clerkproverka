@@ -5,24 +5,30 @@ import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
+const ADMIN_USER_ID = process.env.NEXT_PUBLIC_ADMIN_USER_ID || 'your_admin_user_id_here';
+
 export default function SignUpPage() {
   const { isLoaded, userId } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (isLoaded && userId) {
-      router.push('/dashboard');
+      // Проверяем права администратора и перенаправляем соответственно
+      if (userId === ADMIN_USER_ID) {
+        router.push('/dashboard');
+      } else {
+        router.push('/unauthorized');
+      }
     }
   }, [isLoaded, userId, router]);
 
-  // Не перенаправляем автоматически, просто рендерим компонент регистрации
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-50">
       <SignUp 
         path="/sign-up"
         routing="path"
         signInUrl="/sign-in"
-        afterSignUpUrl="/dashboard"
+        // Убираем afterSignUpUrl, чтобы использовать логику выше
       />
     </div>
   );
