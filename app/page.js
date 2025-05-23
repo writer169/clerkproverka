@@ -4,19 +4,38 @@ import Link from 'next/link';
 import { Shield, Users, Settings, ArrowRight } from 'lucide-react';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-const ADMIN_USER_ID = process.env.NEXT_PUBLIC_ADMIN_USER_ID || 'your_admin_user_id_here';
+// Добавить состояние:
+const [adminCheck, setAdminCheck] = useState({ loading: true, isAdmin: false });
 
 export default function Home() {
   const { isLoaded, userId } = useAuth();
   const router = useRouter();
 
+  // Заменить useEffect:
   useEffect(() => {
-    // Если пользователь авторизован и является админом, перенаправляем в панель
-    if (isLoaded && userId === ADMIN_USER_ID) {
-      router.push('/dashboard');
-    }
+    const checkAdminStatus = async () => {
+      if (isLoaded && userId) {
+        try {
+          const response = await fetch('/api/auth/check-admin');
+          const data = await response.json();
+
+          setAdminCheck({ loading: false, isAdmin: data.isAdmin });
+
+          if (data.isAdmin) {
+            router.push('/dashboard');
+          }
+        } catch (error) {
+          console.error('Ошибка проверки прав:', error);
+          setAdminCheck({ loading: false, isAdmin: false });
+        }
+      } else if (isLoaded) {
+        setAdminCheck({ loading: false, isAdmin: false });
+      }
+    };
+
+    checkAdminStatus();
   }, [isLoaded, userId, router]);
 
   return (
@@ -87,7 +106,7 @@ export default function Home() {
                 <p className="text-gray-600 mb-6">
                   Войдите в систему для доступа к панели администратора
                 </p>
-                
+
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                   <Link
                     href="/sign-in"
@@ -96,7 +115,7 @@ export default function Home() {
                     Войти
                     <ArrowRight className="ml-2 w-4 h-4" />
                   </Link>
-                  
+
                   <Link
                     href="/sign-up"
                     className="inline-flex items-center justify-center px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200 min-w-[140px]"
@@ -117,8 +136,8 @@ export default function Home() {
                       Только для администраторов
                     </h4>
                     <p className="text-sm text-amber-700">
-                      Доступ к панели управления имеют только пользователи с правами администратора. 
-                      Если у вас нет соответствующих прав, вы будете перенаправлены на страницу с 
+                      Доступ к панели управления имеют только пользователи с правами администратора.
+                      Если у вас нет соответствующих прав, вы будете перенаправлены на страницу с
                       уведомлением о недостатке полномочий.
                     </p>
                   </div>
@@ -130,7 +149,7 @@ export default function Home() {
           {/* Дополнительная информация */}
           <div className="mt-12 text-center">
             <p className="text-sm text-gray-500">
-              Система работает на базе Next.js, MongoDB и Clerk для обеспечения 
+              Система работает на базе Next.js, MongoDB и Clerk для обеспечения
               надёжной аутентификации и безопасности данных
             </p>
           </div>
