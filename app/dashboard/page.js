@@ -277,4 +277,195 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {
+      {/* Шапка */}
+      <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+                Панель администратора
+              </h1>
+              <p className="text-sm text-gray-600 hidden sm:block">
+                Управление запросами на доступ к приложениям
+              </p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={fetchCurrentTabData}
+                disabled={loading}
+                className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Обновить</span>
+              </button>
+              <UserButton afterSignOutUrl="/" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Основной контент */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Уведомления */}
+        {successMessage && (
+          <div className="mb-6 flex items-center space-x-2 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <CheckCircle className="w-5 h-5 text-green-500" />
+            <p className="text-green-800 text-sm font-medium">{successMessage}</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-6 flex items-center space-x-2 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <AlertCircle className="w-5 h-5 text-red-500" />
+            <p className="text-red-800 text-sm font-medium">{error}</p>
+          </div>
+        )}
+
+        {/* Статистика */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+            <div className="flex items-center">
+              <div className="p-2 bg-orange-100 rounded-md">
+                <Clock className="w-5 h-5 text-orange-600" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-600">Ожидающие</p>
+                <p className="text-2xl font-bold text-gray-900">{requests.length}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+            <div className="flex items-center">
+              <div className="p-2 bg-green-100 rounded-md">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-600">Одобренные</p>
+                <p className="text-2xl font-bold text-gray-900">{approvedRequests.length}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+            <div className="flex items-center">
+              <div className="p-2 bg-red-100 rounded-md">
+                <XCircle className="w-5 h-5 text-red-600" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-600">Отклоненные</p>
+                <p className="text-2xl font-bold text-gray-900">{rejectedRequests.length}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Табы */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+          <div className="border-b border-gray-200">
+            <nav className="flex space-x-8 px-4" aria-label="Tabs">
+              <button
+                onClick={() => handleTabChange('pending')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'pending'
+                    ? 'border-orange-500 text-orange-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <Clock className="w-4 h-4" />
+                  <span>Ожидающие</span>
+                  {requests.length > 0 && (
+                    <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                      {requests.length}
+                    </span>
+                  )}
+                </div>
+              </button>
+              <button
+                onClick={() => handleTabChange('approved')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'approved'
+                    ? 'border-green-500 text-green-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Одобренные</span>
+                  {approvedRequests.length > 0 && (
+                    <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                      {approvedRequests.length}
+                    </span>
+                  )}
+                </div>
+              </button>
+              <button
+                onClick={() => handleTabChange('rejected')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'rejected'
+                    ? 'border-red-500 text-red-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <XCircle className="w-4 h-4" />
+                  <span>Отклоненные</span>
+                  {rejectedRequests.length > 0 && (
+                    <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                      {rejectedRequests.length}
+                    </span>
+                  )}
+                </div>
+              </button>
+            </nav>
+          </div>
+
+          {/* Заголовок активной вкладки */}
+          <div className="px-4 py-3 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">
+              {getTabTitle()}
+            </h2>
+            <p className="text-sm text-gray-600">
+              {getTabDescription()}
+            </p>
+          </div>
+
+          {/* Содержимое */}
+          <div className="p-4">
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-600">Загрузка запросов...</p>
+              </div>
+            ) : currentRequests.length === 0 ? (
+              <div className="text-center py-8">
+                {emptyState.icon}
+                <p className="text-gray-600 font-medium">{emptyState.title}</p>
+                <p className="text-gray-500 text-sm">
+                  {emptyState.description}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-0">
+                {currentRequests.map((request) => (
+                  activeTab === 'pending' ? (
+                    <RequestCard
+                      key={request._id}
+                      request={request}
+                      onApprove={handleApprove}
+                      onReject={handleReject}
+                    />
+                  ) : (
+                    <ApprovedRequestCard
+                      key={request._id}
+                      request={request}
+                    />
+                  )
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
