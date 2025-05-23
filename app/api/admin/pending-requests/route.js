@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { clerkClient } from '@clerk/backend';
+import { auth, getUser } from '@clerk/nextjs/server'; // Замените clerkClient на getUser
 import clientPromise from '../../../../lib/mongodb';
 import { getAppName } from '../../../../utils/appNames';
 
@@ -10,7 +9,7 @@ export async function GET() {
   try {
     // Проверяем аутентификацию
     const { userId } = await auth();
-    
+
     if (!userId) {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
     }
@@ -35,14 +34,14 @@ export async function GET() {
     const requestsWithUserInfo = await Promise.all(
       pendingRequests.map(async (request) => {
         try {
-          const user = await clerkClient.users.getUser(request.userId);
-          
+          const user = await getUser(request.userId); // Используем getUser
+
           return {
             _id: request._id.toString(),
             userId: request.userId,
-            email: user.emailAddresses[0]?.emailAddress || 'Неизвестно',
-            firstName: user.firstName || '',
-            lastName: user.lastName || '',
+            email: user?.emailAddresses[0]?.emailAddress || 'Неизвестно',
+            firstName: user?.firstName || '',
+            lastName: user?.lastName || '',
             appId: request.appId,
             appName: getAppName(request.appId),
             status: request.status,
