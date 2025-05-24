@@ -59,7 +59,7 @@ export async function POST() {
 
     // Подключаемся к MongoDB
     const client = await clientPromise;
-    const db = client.db(authapp);
+    const db = client.db('authapp'); // Исправлено: убраны лишние кавычки
     const collection = db.collection('auth_approvals');
 
     // Очищаем старые демо-данные
