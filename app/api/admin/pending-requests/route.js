@@ -23,7 +23,7 @@ export async function GET() {
       .sort({ requestedAt: -1 })
       .toArray();
 
-    // Преобразуем данные для фронтенда
+    // Преобразуем данные для фронтенда с правильной обработкой пользовательских данных
     const formattedRequests = pendingRequests.map((request) => ({
       _id: request._id.toString(),
       userId: request.userId,
@@ -34,10 +34,14 @@ export async function GET() {
       appName: getAppName(request.appId),
       status: request.status,
       requestedAt: request.requestedAt,
-      approvedAt: request.approvedAt
+      approvedAt: request.approvedAt || null,
+      rejectedAt: request.rejectedAt || null
     }));
 
-    return NextResponse.json({ requests: formattedRequests });
+    return NextResponse.json({ 
+      requests: formattedRequests,
+      count: formattedRequests.length 
+    });
   } catch (error) {
     console.error('Ошибка получения ожидающих запросов:', error);
     return NextResponse.json(
