@@ -53,7 +53,7 @@ export default function RequestCard({ request, onApprove, onReject }) {
                   {request.userEmail}
                 </span>
                 <span className="text-sm text-gray-500">
-                  ({request.userName})
+                  ({request.userFirstName} {request.userLastName})
                 </span>
               </div>
               
@@ -66,7 +66,7 @@ export default function RequestCard({ request, onApprove, onReject }) {
 
               <div className="flex items-center space-x-2 text-sm text-gray-500">
                 <Calendar className="w-4 h-4" />
-                <span>Подан: {formatDate(request.createdAt)}</span>
+                <span>Подан: {formatDate(request.requestedAt)}</span>
               </div>
             </div>
           </div>
