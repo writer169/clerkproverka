@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import clientPromise from '../../../../lib/mongodb';
+import { getAppName } from '../../../../utils/appNames';
 import { ADMIN_USER_ID } from '../../../../lib/config';
 
 export async function GET() {
@@ -23,14 +24,29 @@ export async function GET() {
     const collection = db.collection('auth_approvals');
 
     // Получаем отклоненные запросы, отсортированные по дате отклонения (новые сначала)
-    const requests = await collection
+    const rejectedRequests = await collection
       .find({ status: 'rejected' })
       .sort({ rejectedAt: -1 })
       .toArray();
 
+    // Преобразуем данные для фронтенда
+    const formattedRequests = rejectedRequests.map((request) => ({
+      _id: request._id.toString(),
+      userId: request.userId,
+      email: request.userEmail || 'Не указан',
+      firstName: request.userFirstName || '',
+      lastName: request.userLastName || '',
+      appId: request.appId,
+      appName: getAppName(request.appId),
+      status: request.status,
+      requestedAt: request.requestedAt,
+      rejectedAt: request.rejectedAt,
+      rejectionReason: request.rejectionReason || 'Не указана'
+    }));
+
     return NextResponse.json({
-      requests,
-      count: requests.length
+      requests: formattedRequests,
+      count: formattedRequests.length
     });
 
   } catch (error) {
