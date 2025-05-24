@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
+import { clerkClient } from '@clerk/nextjs/server';
 import clientPromise from '../../../../lib/mongodb';
 import { getAppName } from '../../../../utils/appNames';
-// Заменить импорт:
 import { ADMIN_USER_ID } from '../../../../lib/config';
 
 export async function GET() {
@@ -27,10 +27,9 @@ export async function GET() {
     const requestsWithUserInfo = await Promise.all(
       pendingRequests.map(async (request) => {
         try {
-          const user = await currentUser();
-          if (user?.id !== request.userId) {
-            throw new Error('User not found or mismatch');
-          }
+          // Получаем пользователя по ID из запроса
+          const user = await clerkClient.users.getUser(request.userId);
+          
           return {
             _id: request._id.toString(),
             userId: request.userId,
