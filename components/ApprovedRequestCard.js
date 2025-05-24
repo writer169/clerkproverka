@@ -1,111 +1,150 @@
 'use client';
 
-import { CheckCircle, X, User, Calendar, Globe, Clock } from 'lucide-react';
-import { getAppName } from '../utils/appNames';
+import { User, Mail, Calendar, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
 export default function ApprovedRequestCard({ request }) {
   const formatDate = (dateString) => {
+    if (!dateString) return 'Не указано';
     return new Date(dateString).toLocaleString('ru-RU', {
       year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
       hour: '2-digit',
       minute: '2-digit'
     });
   };
 
-  const getStatusIcon = () => {
-    if (request.status === 'approved') {
-      return <CheckCircle className="w-5 h-5 text-green-500" />;
-    } else if (request.status === 'rejected') {
-      return <X className="w-5 h-5 text-red-500" />;
+  const getUserDisplayName = () => {
+    const { firstName, lastName, email } = request;
+    
+    if (firstName && lastName) {
+      return `${firstName} ${lastName}`;
     }
-    return <Clock className="w-5 h-5 text-orange-500" />;
+    
+    if (firstName) {
+      return firstName;
+    }
+    
+    if (lastName) {
+      return lastName;
+    }
+    
+    return email || 'Неизвестный пользователь';
   };
 
-  const getStatusText = () => {
-    if (request.status === 'approved') {
-      return { text: 'Одобрен', color: 'text-green-600', bg: 'bg-green-50' };
-    } else if (request.status === 'rejected') {
-      return { text: 'Отклонен', color: 'text-red-600', bg: 'bg-red-50' };
+  const getStatusInfo = () => {
+    switch (request.status) {
+      case 'approved':
+        return {
+          icon: <CheckCircle className="w-4 h-4" />,
+          label: 'Одобрен',
+          bgColor: 'bg-green-100',
+          textColor: 'text-green-800',
+          date: request.approvedAt,
+          dateLabel: 'Дата одобрения:'
+        };
+      case 'rejected':
+        return {
+          icon: <XCircle className="w-4 h-4" />,
+          label: 'Отклонен',
+          bgColor: 'bg-red-100',
+          textColor: 'text-red-800',
+          date: request.rejectedAt,
+          dateLabel: 'Дата отклонения:'
+        };
+      default:
+        return {
+          icon: <AlertTriangle className="w-4 h-4" />,
+          label: 'Неизвестно',
+          bgColor: 'bg-gray-100',
+          textColor: 'text-gray-800',
+          date: null,
+          dateLabel: 'Дата:'
+        };
     }
-    return { text: 'Ожидает', color: 'text-orange-600', bg: 'bg-orange-50' };
   };
 
-  const statusInfo = getStatusText();
+  const statusInfo = getStatusInfo();
 
   return (
-    <div className="border-b border-gray-200 last:border-b-0 p-4">
-      <div className="flex flex-col space-y-3">
-        {/* Заголовок и статус */}
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center space-x-2 mb-2">
-              <User className="w-4 h-4 text-gray-500" />
-              <span className="font-medium text-gray-900">
-                {request.userEmail}
-              </span>
-              <span className="text-sm text-gray-500">
-                ({request.userFirstName} {request.userLastName})
+    <div className="border border-gray-200 rounded-lg p-4 bg-white hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          {/* Информация о пользователе */}
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="flex-shrink-0">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                request.status === 'approved' ? 'bg-green-100' : 
+                request.status === 'rejected' ? 'bg-red-100' : 'bg-gray-100'
+              }`}>
+                <User className={`w-5 h-5 ${
+                  request.status === 'approved' ? 'text-green-600' : 
+                  request.status === 'rejected' ? 'text-red-600' : 'text-gray-600'
+                }`} />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {getUserDisplayName()}
+              </h3>
+              {request.email && (
+                <div className="flex items-center space-x-1 text-sm text-gray-600">
+                  <Mail className="w-3 h-3" />
+                  <span>{request.email}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Информация о запросе */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-700">Приложение:</span>
+              <span className="text-sm text-gray-900 font-semibold">
+                {request.appName}
               </span>
             </div>
             
-            <div className="flex items-center space-x-2 mb-2">
-              <Globe className="w-4 h-4 text-gray-500" />
-              <span className="text-sm text-gray-700">
-                Доступ к: <strong>{getAppName(request.appId)}</strong>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-700">ID приложения:</span>
+              <span className="text-sm text-gray-600 font-mono">
+                {request.appId}
               </span>
             </div>
-          </div>
 
-          {/* Статус */}
-          <div className={`flex items-center space-x-2 px-3 py-1 rounded-full ${statusInfo.bg}`}>
-            {getStatusIcon()}
-            <span className={`text-sm font-medium ${statusInfo.color}`}>
-              {statusInfo.text}
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-700">Дата запроса:</span>
+              <div className="flex items-center space-x-1 text-sm text-gray-600">
+                <Calendar className="w-3 h-3" />
+                <span>{formatDate(request.requestedAt)}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-700">{statusInfo.dateLabel}</span>
+              <div className="flex items-center space-x-1 text-sm text-gray-600">
+                <Calendar className="w-3 h-3" />
+                <span>{formatDate(statusInfo.date)}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-700">Статус:</span>
+              <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${statusInfo.bgColor} ${statusInfo.textColor}`}>
+                {statusInfo.icon}
+                <span>{statusInfo.label}</span>
+              </span>
+            </div>
+
+            {/* Причина отклонения для отклоненных запросов */}
+            {request.status === 'rejected' && request.rejectionReason && (
+              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm font-medium text-red-800 mb-1">Причина отклонения:</p>
+                <p className="text-sm text-red-700">{request.rejectionReason}</p>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Даты */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6 space-y-1 sm:space-y-0 text-sm text-gray-500">
-          <div className="flex items-center space-x-2">
-            <Calendar className="w-4 h-4" />
-            <span>Подан: {formatDate(request.requestedAt)}</span>
-          </div>
-          
-          {request.status === 'approved' && request.approvedAt && (
-            <div className="flex items-center space-x-2">
-              <CheckCircle className="w-4 h-4 text-green-500" />
-              <span>Одобрен: {formatDate(request.approvedAt)}</span>
-            </div>
-          )}
-          
-          {request.status === 'rejected' && request.rejectedAt && (
-            <div className="flex items-center space-x-2">
-              <X className="w-4 h-4 text-red-500" />
-              <span>Отклонен: {formatDate(request.rejectedAt)}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Причина отказа */}
-        {request.status === 'rejected' && request.rejectionReason && (
-          <div className="bg-red-50 rounded-md p-3">
-            <p className="text-sm text-red-800">
-              <strong>Причина отказа:</strong> {request.rejectionReason}
-            </p>
-          </div>
-        )}
-
-        {/* Обоснование запроса */}
-        {request.reason && (
-          <div className="bg-gray-50 rounded-md p-3">
-            <p className="text-sm text-gray-600">
-              <strong>Обоснование:</strong> {request.reason}
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
