@@ -29,7 +29,7 @@ export async function GET() {
       .sort({ approvedAt: -1 })
       .toArray();
 
-    // Преобразуем данные для фронтенда
+    // Преобразуем данные для фронтенда с правильной обработкой пользовательских данных
     const formattedRequests = approvedRequests.map((request) => ({
       _id: request._id.toString(),
       userId: request.userId,
@@ -40,7 +40,9 @@ export async function GET() {
       appName: getAppName(request.appId),
       status: request.status,
       requestedAt: request.requestedAt,
-      approvedAt: request.approvedAt
+      approvedAt: request.approvedAt,
+      rejectedAt: request.rejectedAt || null,
+      rejectionReason: request.rejectionReason || null
     }));
 
     return NextResponse.json({
